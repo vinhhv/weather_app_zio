@@ -1,11 +1,12 @@
 package com.misterjvm.weather.services
 
+import com.misterjvm.weather.clients.WeatherClient
 import com.misterjvm.weather.domain.constants
 import com.misterjvm.weather.domain.responses.ForecastResponse
 import zio.*
 
 trait WeatherService {
-  def getForecast(coordinates: String): ForecastResponse
+  def getForecast(coordinates: String): Task[ForecastResponse]
 }
 
 class WeatherServiceLive private (weatherClient: WeatherClient) extends WeatherService {

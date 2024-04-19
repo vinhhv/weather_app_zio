@@ -14,5 +14,5 @@ trait WeatherEndpoint extends BaseEndpoint {
       .description("Get forecast for given geographic coordinates (latitude/longitude)")
       .in("forecast" / path[String]("coordinates"))
       .get
-      .out(jsonBody[Option[ForecastResponse]])
+      .out(jsonBody[ForecastResponse])
 }
