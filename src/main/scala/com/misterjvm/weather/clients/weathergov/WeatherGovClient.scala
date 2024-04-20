@@ -10,7 +10,23 @@ import zio.json.*
 class WeatherGovClient private (client: Client) extends WeatherClient {
   import WeatherGovClient.*
 
-  override def getForecast(coordinates: String): Task[ForecastResponse] = ???
+  override def getForecast(coordinates: String): Task[ForecastResponse] =
+    for {
+      metadata <- getMetadata(coordinates)
+      currentHourForecast <-
+        getHourlyForecast(metadata.gridId, metadata.gridX, metadata.gridY)
+          .someOrFail(new RuntimeException(s"Did not find any hour forecasts for $coordinates"))
+      zoneId <- ZIO
+        .attempt(metadata.zoneIdOpt)
+        .someOrFail(new RuntimeException(s"Could not parse zone ID from url: ${metadata.forecastZone}"))
+      alerts <- getAlerts(zoneId)
+    } yield ForecastResponse(
+      currentHourForecast.shortForecast,
+      currentHourForecast.getTemperatureFeel,
+      currentHourForecast.temperature,
+      currentHourForecast.temperatureUnit,
+      alerts.map(_.description)
+    )
 
   override val headers = Headers(userAgent -> "MisterWeatherApp/1.0")
 
@@ -61,7 +77,7 @@ object WeatherGovDemo extends ZIOAppDefault {
       metadata.gridY
     )
     zoneId <- ZIO
-      .attempt(metadata.zoneId)
+      .attempt(metadata.zoneIdOpt)
       .someOrFail(new RuntimeException(s"Failed to parse zone ID from ${metadata.forecastZone}"))
     alerts <- weatherGovClient.getAlerts(zoneId)
     _      <- Console.printLine("\n\n\nMetadata")

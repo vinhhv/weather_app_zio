@@ -1,15 +1,14 @@
 package com.misterjvm.weather.clients.weathergov
 
+import com.misterjvm.weather.domain.data.TemperatureFeel
 import zio.json.*
-
-enum TemperatureFeel:
-  case Cold, Moderate, Hot
 
 final case class WeatherForecastHourly(
     startTime: String,
     endTime: String,
     // Temperature unit is provided in degrees F
     temperature: Int,
+    temperatureUnit: String,
     shortForecast: String
 ) {
   def getTemperatureFeel: TemperatureFeel =
