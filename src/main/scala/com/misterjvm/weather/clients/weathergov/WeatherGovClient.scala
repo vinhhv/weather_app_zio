@@ -31,28 +31,28 @@ class WeatherGovClient private (client: Client) extends WeatherClient {
   override val headers = Headers(userAgent -> "MisterWeatherApp/1.0")
 
   def getMetadata(coordinates: String): Task[WeatherMetadata] = {
-    makeRequest[WeatherMetadataProperties, WeatherMetadata](
+    makeRequest[WeatherMetadataProperties, WeatherMetadata, WeatherError](
       "fetch metadata",
       getMetadataUrl(coordinates),
       client
-    )(_.properties)
+    )(_.properties)(_.detail)
   }
 
   def getHourlyForecast(gridId: String, gridX: Int, gridY: Int): Task[Option[WeatherForecastHourly]] =
-    makeRequest[WeatherForecastProperties, Option[WeatherForecastHourly]](
+    makeRequest[WeatherForecastProperties, Option[WeatherForecastHourly], WeatherError](
       "fetch hourly forecasts",
       getHourlyForecastUrl(gridId, gridX, gridY),
       client
     )(
-      _.properties.periods.headOption
-    ) // Grabs the first hourly forecast from the response as we only need the current hourly forecast
+      _.properties.periods.headOption // Grabs the first hourly forecast from the response as we only need the current hourly forecast
+    )(_.detail)
 
   def getAlerts(zoneId: String): Task[List[WeatherAlert]] =
-    makeRequest[WeatherAlertFeatures, List[WeatherAlert]](
+    makeRequest[WeatherAlertFeatures, List[WeatherAlert], WeatherError](
       "fetch weather alerts",
       getAlertsUrl(zoneId),
       client
-    )(_.features.map(_.properties))
+    )(_.features.map(_.properties))(_.detail)
 }
 
 object WeatherGovClient {
