@@ -14,7 +14,7 @@ class WeatherServiceLive private (weatherClient: WeatherClient) extends WeatherS
     for {
       coordinatesVerified <- WeatherService.verifyCoordinates(coordinates)
       weatherResponse     <- weatherClient.getForecast(coordinatesVerified)
-    } yield ForecastResponse("", "", Some(""))
+    } yield weatherResponse
 }
 
 object WeatherService {
@@ -27,4 +27,12 @@ object WeatherService {
       )
     else
       ZIO.succeed(coordinates)
+
+}
+
+object WeatherServiceLive {
+  val layer =
+    ZLayer {
+      ZIO.service[WeatherClient].map(client => new WeatherServiceLive(client))
+    }
 }

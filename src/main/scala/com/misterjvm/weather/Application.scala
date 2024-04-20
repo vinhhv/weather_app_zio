@@ -1,12 +1,14 @@
 package com.misterjvm.weather
 
 import com.misterjvm.weather.configs.*
+import com.misterjvm.weather.clients.weathergov.*
 import com.misterjvm.weather.http.*
+import com.misterjvm.weather.services.*
 import sttp.tapir.*
 import sttp.tapir.server.interceptor.cors.CORSInterceptor
 import sttp.tapir.server.ziohttp.{ZioHttpInterpreter, ZioHttpServerOptions}
 import zio.*
-import zio.http.{Server, ServerConfig}
+import zio.http.*
 
 import java.net.InetSocketAddress
 
@@ -33,5 +35,14 @@ object Application extends ZIOAppDefault {
     _ <- startServer
   } yield ()
 
-  override def run = program.provide(configuredServer)
+  override def run = program.provide(
+    configuredServer,
+    // services
+    WeatherServiceLive.layer,
+    // clients
+    WeatherGovClient.layer,
+    // HTTP ZClient
+    Client.default,
+    Scope.default
+  )
 }
