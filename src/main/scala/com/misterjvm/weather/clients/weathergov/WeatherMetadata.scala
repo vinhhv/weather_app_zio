@@ -8,7 +8,7 @@ final case class WeatherMetadata(
     gridY: Int,
     forecastZone: String
 ) {
-  def extractZone: Option[String] = {
+  val zoneId: Option[String] = {
     val pattern = ".*/([^/]+)$".r
     forecastZone match {
       case pattern(zone) => Some(zone)

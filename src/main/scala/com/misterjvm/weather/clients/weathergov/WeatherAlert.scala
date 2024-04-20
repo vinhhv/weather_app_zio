@@ -17,8 +17,16 @@ object WeatherAlert {
   given codec: JsonCodec[WeatherAlert] = DeriveJsonCodec.gen[WeatherAlert]
 }
 
+final case class WeatherAlertProperties(
+    properties: WeatherAlert
+)
+
+object WeatherAlertProperties {
+  given codec: JsonCodec[WeatherAlertProperties] = DeriveJsonCodec.gen[WeatherAlertProperties]
+}
+
 final case class WeatherAlertFeatures(
-    features: List[WeatherAlert]
+    features: List[WeatherAlertProperties]
 )
 
 object WeatherAlertFeatures {

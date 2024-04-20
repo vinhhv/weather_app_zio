@@ -78,7 +78,7 @@ class WeatherGovClient private (client: Client) extends WeatherClient {
               Left(new RuntimeException(s"Failed to parse alerts: $message"))
             case Right(alerts) => Right(alerts)
           })
-            .map(_.features)
+            .map(_.features.map(_.properties))
         }.absolve
     } yield alerts
 }
@@ -98,13 +98,23 @@ object WeatherGovClient {
 object WeatherGovDemo extends ZIOAppDefault {
   val program = for {
     weatherGovClient <- ZIO.service[WeatherGovClient]
-    metadata         <- weatherGovClient.getMetadata("39.7456,-97.0892").map(_.properties)
+    metadata         <- weatherGovClient.getMetadata("39.44,-105.86").map(_.properties)
     hourlyForecast <- weatherGovClient.getHourlyForecast(
       metadata.gridId,
       metadata.gridX,
       metadata.gridY
     )
-    _ <- Console.printLine(metadata)
+    zoneId <- ZIO
+      .attempt(metadata.zoneId)
+      .someOrFail(new RuntimeException(s"Failed to parse zone ID from ${metadata.forecastZone}"))
+    alerts <- weatherGovClient.getAlerts(zoneId)
+    _      <- Console.printLine("\n\n\nMetadata")
+    _      <- Console.printLine(metadata)
+    _      <- Console.printLine("\n\nHour Forecast")
+    _      <- Console.printLine(hourlyForecast)
+    _      <- Console.printLine("\n\nAlerts")
+    _      <- Console.printLine(alerts)
+    _      <- Console.printLine("\n\n\n")
   } yield ()
 
   override def run: ZIO[Any & (ZIOAppArgs & Scope), Any, Any] =
