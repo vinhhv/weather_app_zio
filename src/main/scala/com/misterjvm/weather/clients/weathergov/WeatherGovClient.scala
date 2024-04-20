@@ -8,79 +8,35 @@ import zio.http.model.*
 import zio.json.*
 
 class WeatherGovClient private (client: Client) extends WeatherClient {
-  override def getForecast(coordinates: String): Task[ForecastResponse] = ???
-
   import WeatherGovClient.*
 
-  def getMetadata(coordinates: String): Task[WeatherMetadataProperties] = {
-    for {
-      url <- ZIO.fromEither(URL.fromString(getMetadataUrl(coordinates)))
-      response <- client.request(
-        getRequest(
-          url = url,
-          headers = Headers(
-            userAgent -> "MisterWeatherApp/1.0"
-          )
-        )
-      )
-      metadata <-
-        response.body.asString.map { json =>
-          json.fromJson[WeatherMetadataProperties] match {
-            case Left(message) =>
-              Left(new RuntimeException(s"Failed to parse weather metadata '$coordinates': $message"))
-            case Right(parsed) => Right(parsed)
-          }
-        }.absolve
-    } yield metadata
+  override def getForecast(coordinates: String): Task[ForecastResponse] = ???
+
+  override val headers = Headers(userAgent -> "MisterWeatherApp/1.0")
+
+  def getMetadata(coordinates: String): Task[WeatherMetadata] = {
+    makeRequest[WeatherMetadataProperties, WeatherMetadata](
+      "fetch metadata",
+      getMetadataUrl(coordinates),
+      client
+    )(_.properties)
   }
 
-  // Grabs the first hourly forecast from the response as we only need the current hourly forecast
-  def getHourlyForecast(gridId: String, gridX: Int, gridY: Int): Task[WeatherForecastHourly] =
-    for {
-      url <- ZIO.fromEither(URL.fromString(getHourlyForecastUrl(gridId, gridX, gridY)))
-      response <- client.request(
-        getRequest(
-          url = url,
-          headers = Headers(
-            userAgent -> "MisterWeatherApp/1.0"
-          )
-        )
-      )
-      currentHourlyForecast <-
-        response.body.asString
-          .map { json =>
-            (json.fromJson[WeatherForecastProperties] match {
-              case Left(message) =>
-                Left(new RuntimeException(s"Failed to parse hourly forecasts: $message"))
-              case Right(forecasts) => Right(forecasts)
-            })
-              .map(_.properties.periods.headOption)
-          }
-          .absolve
-          .someOrFail(new RuntimeException("No forecasts available for the provided coordinates"))
-    } yield currentHourlyForecast
+  def getHourlyForecast(gridId: String, gridX: Int, gridY: Int): Task[Option[WeatherForecastHourly]] =
+    makeRequest[WeatherForecastProperties, Option[WeatherForecastHourly]](
+      "fetch hourly forecasts",
+      getHourlyForecastUrl(gridId, gridX, gridY),
+      client
+    )(
+      _.properties.periods.headOption
+    ) // Grabs the first hourly forecast from the response as we only need the current hourly forecast
 
   def getAlerts(zoneId: String): Task[List[WeatherAlert]] =
-    for {
-      url <- ZIO.fromEither(URL.fromString(getAlertsUrl(zoneId)))
-      response <- client.request(
-        getRequest(
-          url = url,
-          headers = Headers(
-            userAgent -> "MisterWeatherApp/1.0"
-          )
-        )
-      )
-      alerts <-
-        response.body.asString.map { json =>
-          (json.fromJson[WeatherAlertFeatures] match {
-            case Left(message) =>
-              Left(new RuntimeException(s"Failed to parse alerts: $message"))
-            case Right(alerts) => Right(alerts)
-          })
-            .map(_.features.map(_.properties))
-        }.absolve
-    } yield alerts
+    makeRequest[WeatherAlertFeatures, List[WeatherAlert]](
+      "fetch weather alerts",
+      getAlertsUrl(zoneId),
+      client
+    )(_.features.map(_.properties))
 }
 
 object WeatherGovClient {
@@ -98,7 +54,7 @@ object WeatherGovClient {
 object WeatherGovDemo extends ZIOAppDefault {
   val program = for {
     weatherGovClient <- ZIO.service[WeatherGovClient]
-    metadata         <- weatherGovClient.getMetadata("39.44,-105.86").map(_.properties)
+    metadata         <- weatherGovClient.getMetadata("39.44,-105.86")
     hourlyForecast <- weatherGovClient.getHourlyForecast(
       metadata.gridId,
       metadata.gridX,
