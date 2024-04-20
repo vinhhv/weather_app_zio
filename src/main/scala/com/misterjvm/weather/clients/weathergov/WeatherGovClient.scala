@@ -33,11 +33,15 @@ class WeatherGovClient private (client: Client) extends WeatherClient {
         }.absolve
     } yield metadata
   }
+
+  def getHourlyForecast(gridId: String, gridX: Int, gridY: Int): Task[WeatherForecast]
 }
 
 object WeatherGovClient {
-  val baseUrl        = "https://api.weather.gov"
-  val getMetadataUrl = s"$baseUrl/points"
+  val baseUrl                             = "https://api.weather.gov"
+  def getMetadataUrl(coordinates: String) = s"$baseUrl/points/$coordinates"
+  def getHourlyForecastUrl(gridId: String, gridX: Int, gridY: Int) =
+    s"$baseUrl/gridpoints/$gridId/$gridX,$gridY/forecast/hourly"
 
   val layer = ZLayer {
     ZIO.service[Client].map(client => new WeatherGovClient(client))
@@ -47,8 +51,13 @@ object WeatherGovClient {
 object WeatherGovDemo extends ZIOAppDefault {
   val program = for {
     weatherGovClient <- ZIO.service[WeatherGovClient]
-    metadata         <- weatherGovClient.getMetadata("39.7456,-97.0892")
-    _                <- Console.printLine(metadata)
+    metadata         <- weatherGovClient.getMetadata("39.7456,-97.0892").map(_.properties)
+    hourlyForecast <- weatherGovClient.getHourlyForecast(
+      metadata.gridId,
+      metadata.gridX,
+      metadata.gridY
+    )
+    _ <- Console.printLine(metadata)
   } yield ()
 
   override def run: ZIO[Any & (ZIOAppArgs & Scope), Any, Any] =

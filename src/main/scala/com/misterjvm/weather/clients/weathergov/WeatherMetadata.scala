@@ -3,9 +3,20 @@ package com.misterjvm.weather.clients.weathergov
 import zio.json.*
 
 final case class WeatherMetadata(
+    gridId: String,
     gridX: Int,
-    gridY: Int
-)
+    gridY: Int,
+    forecastZone: String
+) {
+  def extractZone: Option[String] = {
+    val pattern = ".*/([^/]+)$".r
+    forecastZone match {
+      case pattern(zone) => Some(zone)
+      case _             => None
+    }
+  }
+}
+
 object WeatherMetadata {
   given codec: JsonCodec[WeatherMetadata] = DeriveJsonCodec.gen[WeatherMetadata]
 }
