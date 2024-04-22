@@ -9,6 +9,7 @@ This project is a simple backend service built with ZIO that fetches weather for
 ### Running the Server (using Docker)
 
 Build `docker build -t weather-app:latest .`
+
 Run `docker run --rm -p 4041:4041 weather-app:latest`
 
 ### Calling the Service (examples)
