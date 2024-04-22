@@ -25,7 +25,6 @@ class WeatherGovClient private (client: Client) extends WeatherClient(client) wi
       alerts <- getAlerts(zoneId)
     } yield ForecastResponse(
       currentHourForecast.shortForecast,
-      currentHourForecast.getTemperatureFeel,
       currentHourForecast.temperature,
       currentHourForecast.temperatureUnit,
       alerts.map(_.description)

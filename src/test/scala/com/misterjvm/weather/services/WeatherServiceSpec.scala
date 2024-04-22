@@ -28,7 +28,6 @@ object WeatherServiceSpec extends ZIOSpecDefault with HeaderNames {
             ZIO.succeed(
               ForecastResponse(
                 WEATHER_CONDITION,
-                TEMPERATURE_FEEL,
                 TEMPERATURE,
                 TEMPERATURE_UNIT,
                 ALERTS

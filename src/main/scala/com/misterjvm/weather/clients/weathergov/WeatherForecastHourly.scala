@@ -10,13 +10,7 @@ final case class WeatherForecastHourly(
     temperature: Int,
     temperatureUnit: String,
     shortForecast: String
-) {
-  def getTemperatureFeel: String =
-    if (temperature < 50) TemperatureFeel.Cold.toString
-    else if (temperature >= 50 && temperature <= 70) TemperatureFeel.Moderate.toString
-    else TemperatureFeel.Hot.toString
-
-}
+)
 
 object WeatherForecastHourly {
   given codec: JsonCodec[WeatherForecastHourly] = DeriveJsonCodec.gen[WeatherForecastHourly]
