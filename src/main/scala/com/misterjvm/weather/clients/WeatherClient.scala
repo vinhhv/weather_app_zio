@@ -6,8 +6,8 @@ import zio.http.model.*
 import zio.json.*
 import zio.*
 
-// Generic client for weather APIs. E represents the error model returned by the API.
-trait WeatherClient {
+// Generic client for weather APIs
+abstract class WeatherClient(client: Client) {
 
   import WeatherClient.*
 
@@ -25,8 +25,7 @@ trait WeatherClient {
    */
   def makeRequest[A: JsonCodec, B, E: JsonCodec](
       description: String,
-      urlString: String,
-      client: Client
+      urlString: String
   )(extractF: A => B)(extractErrorF: E => String): Task[B] =
     for {
       url <- ZIO.fromEither(URL.fromString(urlString))

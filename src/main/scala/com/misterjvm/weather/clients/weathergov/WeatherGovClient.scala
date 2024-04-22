@@ -8,7 +8,7 @@ import zio.http.model.*
 import zio.http.model.headers.HeaderNames
 import zio.json.*
 
-class WeatherGovClient private (client: Client) extends WeatherClient with HeaderNames {
+class WeatherGovClient private (client: Client) extends WeatherClient(client) with HeaderNames {
   import WeatherGovClient.*
 
   override val headers = Headers(userAgent -> "MisterWeatherApp/1.0")
@@ -34,16 +34,14 @@ class WeatherGovClient private (client: Client) extends WeatherClient with Heade
   def getMetadata(coordinates: String): Task[WeatherMetadata] = {
     makeRequest[WeatherMetadataProperties, WeatherMetadata, WeatherError](
       "fetch metadata",
-      getMetadataUrl(coordinates),
-      client
+      getMetadataUrl(coordinates)
     )(_.properties)(_.detail)
   }
 
   def getHourlyForecast(gridId: String, gridX: Int, gridY: Int): Task[Option[WeatherForecastHourly]] =
     makeRequest[WeatherForecastProperties, Option[WeatherForecastHourly], WeatherError](
       "fetch hourly forecasts",
-      getHourlyForecastUrl(gridId, gridX, gridY),
-      client
+      getHourlyForecastUrl(gridId, gridX, gridY)
     )(
       _.properties.periods.headOption // Grabs the first hourly forecast from the response as we only need the current hourly forecast
     )(_.detail)
@@ -51,8 +49,7 @@ class WeatherGovClient private (client: Client) extends WeatherClient with Heade
   def getAlerts(zoneId: String): Task[List[WeatherAlert]] =
     makeRequest[WeatherAlertFeatures, List[WeatherAlert], WeatherError](
       "fetch weather alerts",
-      getAlertsUrl(zoneId),
-      client
+      getAlertsUrl(zoneId)
     )(_.features.map(_.properties))(_.detail)
 }
 
