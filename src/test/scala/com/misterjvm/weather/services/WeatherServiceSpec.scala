@@ -1,6 +1,7 @@
 package com.misterjvm.weather.services
 
 import com.misterjvm.weather.clients.WeatherClient
+import com.misterjvm.weather.domain.errors.MalformedInputException
 import com.misterjvm.weather.domain.responses.ForecastResponse
 import zio.*
 import zio.http.*
@@ -55,7 +56,7 @@ object WeatherServiceSpec extends ZIOSpecDefault with HeaderNames {
         for {
           service  <- ZIO.service[WeatherService]
           forecast <- service.getForecast("18.43a,-108.b23").flip
-        } yield assertTrue(forecast.isInstanceOf[IllegalArgumentException])
+        } yield assertTrue(forecast.isInstanceOf[MalformedInputException])
       }
     ).provide(WeatherServiceLive.layer, stubClientLayer, Client.default, Scope.default)
 }

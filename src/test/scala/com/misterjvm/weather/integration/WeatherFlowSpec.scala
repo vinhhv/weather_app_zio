@@ -78,7 +78,7 @@ object WeatherFlowSpec extends ZIOSpecDefault with HeaderNames {
         for {
           backendStub   <- backendStubZIO
           maybeResponse <- backendStub.get[ForecastResponse](s"/forecast/$OUT_OF_BOUNDS_COORDINATES")
-        } yield assert(maybeResponse)(isLeft(equalTo("Unable to provide data for requested point 47.123,179.999")))
+        } yield assert(maybeResponse)(isRight(equalTo(None)))
       }
     ).provide(
       // services

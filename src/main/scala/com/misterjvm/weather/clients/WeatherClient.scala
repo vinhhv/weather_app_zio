@@ -1,5 +1,6 @@
 package com.misterjvm.weather.clients
 
+import com.misterjvm.weather.domain.errors.UpstreamServiceException
 import com.misterjvm.weather.domain.responses.ForecastResponse
 import zio.http.*
 import zio.http.model.*
@@ -51,7 +52,7 @@ abstract class WeatherClient(client: Client) {
             case Left(message) =>
               // Error occurred elsewhere or broken error response
               ZIO.fail(new RuntimeException(s"Failed with unknown error: $message"))
-            case Right(error) => ZIO.fail(new RuntimeException(extractErrorF(error)))
+            case Right(error) => ZIO.fail(new UpstreamServiceException(extractErrorF(error)))
           })
         }
     }

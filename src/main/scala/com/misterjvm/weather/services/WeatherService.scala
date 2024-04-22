@@ -3,6 +3,7 @@ package com.misterjvm.weather.services
 import com.misterjvm.weather.clients.WeatherClient
 import com.misterjvm.weather.domain.constants
 import com.misterjvm.weather.domain.responses.ForecastResponse
+import com.misterjvm.weather.domain.errors.MalformedInputException
 import zio.*
 
 trait WeatherService {
@@ -21,7 +22,7 @@ object WeatherService {
   def verifyCoordinates(coordinates: String): Task[String] =
     if (!coordinates.matches(constants.coordinatesRegex))
       ZIO.fail(
-        new IllegalArgumentException(
+        new MalformedInputException(
           "Coordinates are not properly formatted or are out of range. Please follow this example: '39.7456,-97.0892'"
         )
       )
