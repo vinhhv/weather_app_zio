@@ -8,7 +8,7 @@ final case class ForecastResponse(
     // Short description of the weather condition
     weatherCondition: String,
     // How the temperature feels, check TemperatureFeel for possible cases
-    temperatureFeel: TemperatureFeel,
+    temperatureFeel: String,
     temperature: Int,
     // F or C
     temperatureUnit: String,

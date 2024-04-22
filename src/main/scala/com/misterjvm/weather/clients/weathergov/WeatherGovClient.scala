@@ -5,10 +5,13 @@ import com.misterjvm.weather.domain.responses.ForecastResponse
 import zio.*
 import zio.http.*
 import zio.http.model.*
+import zio.http.model.headers.HeaderNames
 import zio.json.*
 
-class WeatherGovClient private (client: Client) extends WeatherClient {
+class WeatherGovClient private (client: Client) extends WeatherClient with HeaderNames {
   import WeatherGovClient.*
+
+  override val headers = Headers(userAgent -> "MisterWeatherApp/1.0")
 
   override def getForecast(coordinates: String): Task[ForecastResponse] =
     for {
@@ -27,8 +30,6 @@ class WeatherGovClient private (client: Client) extends WeatherClient {
       currentHourForecast.temperatureUnit,
       alerts.map(_.description)
     )
-
-  override val headers = Headers(userAgent -> "MisterWeatherApp/1.0")
 
   def getMetadata(coordinates: String): Task[WeatherMetadata] = {
     makeRequest[WeatherMetadataProperties, WeatherMetadata, WeatherError](
@@ -87,6 +88,8 @@ object WeatherGovDemo extends ZIOAppDefault {
     _      <- Console.printLine("\n\nAlerts")
     _      <- Console.printLine(alerts)
     _      <- Console.printLine("\n\n\n")
+    // Out of range attempt, should return error from upstream service
+    _ <- weatherGovClient.getMetadata("47.123,-179.999")
   } yield ()
 
   override def run: ZIO[Any & (ZIOAppArgs & Scope), Any, Any] =

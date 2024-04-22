@@ -11,10 +11,10 @@ final case class WeatherForecastHourly(
     temperatureUnit: String,
     shortForecast: String
 ) {
-  def getTemperatureFeel: TemperatureFeel =
-    if (temperature < 50) TemperatureFeel.Cold
-    else if (temperature >= 50 && temperature <= 70) TemperatureFeel.Moderate
-    else TemperatureFeel.Hot
+  def getTemperatureFeel: String =
+    if (temperature < 50) TemperatureFeel.Cold.toString
+    else if (temperature >= 50 && temperature <= 70) TemperatureFeel.Moderate.toString
+    else TemperatureFeel.Hot.toString
 
 }
 

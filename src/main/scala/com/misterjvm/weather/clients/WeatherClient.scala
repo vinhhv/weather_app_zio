@@ -3,12 +3,11 @@ package com.misterjvm.weather.clients
 import com.misterjvm.weather.domain.responses.ForecastResponse
 import zio.http.*
 import zio.http.model.*
-import zio.http.model.headers.HeaderNames
 import zio.json.*
 import zio.*
 
 // Generic client for weather APIs. E represents the error model returned by the API.
-trait WeatherClient extends HeaderNames {
+trait WeatherClient {
 
   import WeatherClient.*
 
@@ -37,30 +36,38 @@ trait WeatherClient extends HeaderNames {
           headers = headers
         )
       )
-      // Parse error if status not OK
-      _ <- response.status match {
-        case Status.Ok => ZIO.unit
-        case status    =>
-          // Attempt to parse error message, if error came from API service
-          response.body.asString.flatMap { json =>
-            (json.fromJson[E] match {
-              case Left(message) =>
-                // Error occurred elsewhere or broken error response
-                ZIO.fail(new RuntimeException(s"Failed with unknown error: $message"))
-              case Right(error) => ZIO.fail(new RuntimeException(extractErrorF(error)))
-            })
-          }
-      }
-      // Parse result
-      result <-
-        response.body.asString.map { json =>
-          (json.fromJson[A] match {
-            case Left(message) =>
-              Left(new RuntimeException(s"Failed to parse response from JSON: $message"))
-            case Right(result) => Right(result)
-          }).map(extractF(_))
-        }.absolve
+      _      <- parseErrorIfExists[E](response, extractErrorF)
+      result <- parseResponse(response, extractF)
     } yield result
+
+  // Attempts to parse an error message if the upstream service returns anything but a 200 OK.
+  // `extractErrorF` is passed in by the caller who knows the structure of the error E.
+  private def parseErrorIfExists[E: JsonCodec](response: Response, extractErrorF: E => String): Task[Unit] =
+    response.status match {
+      case Status.Ok => ZIO.unit
+      case status    =>
+        // Attempt to parse error message, if error came from API service
+        response.body.asString.flatMap { json =>
+          (json.fromJson[E] match {
+            case Left(message) =>
+              // Error occurred elsewhere or broken error response
+              ZIO.fail(new RuntimeException(s"Failed with unknown error: $message"))
+            case Right(error) => ZIO.fail(new RuntimeException(extractErrorF(error)))
+          })
+        }
+    }
+
+  // Attempts to parse the response from the upstream service into the provided structure A.
+  // `extractF` flattens the JSON response into the desired structure for further processing.
+  private def parseResponse[A: JsonCodec, B](response: Response, extractF: A => B): Task[B] =
+    response.body.asString.map { json =>
+      (json.fromJson[A] match {
+        case Left(message) =>
+          Left(new RuntimeException(s"Failed to parse response from JSON: $message"))
+        case Right(result) => Right(result)
+      }).map(extractF(_))
+    }.absolve
+
 }
 
 object WeatherClient {

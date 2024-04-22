@@ -22,7 +22,7 @@ object WeatherService {
     if (!coordinates.matches(constants.coordinatesRegex))
       ZIO.fail(
         new IllegalArgumentException(
-          "Coordinates are not properly formatted. Please follow this example: '39.7456,-97.0892'"
+          "Coordinates are not properly formatted or are out of range. Please follow this example: '39.7456,-97.0892'"
         )
       )
     else
